@@ -111,7 +111,7 @@ def create_model(fingerprint_input, model_settings, model_architecture,
                                          is_training, runtime_settings)
   elif model_architecture == 'mobinet':
       return create_mobinet_model(fingerprint_input, model_settings,
-                                         is_training, runtime_settings);
+                                         is_training);
   else:
     raise Exception('model_architecture argument "' + model_architecture +
                     '" not recognized, should be one of "single_fc", "conv",' +
