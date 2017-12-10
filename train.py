@@ -151,8 +151,17 @@ def main(_):
   with tf.name_scope('train'), tf.control_dependencies(control_dependencies):
     learning_rate_input = tf.placeholder(
         tf.float32, [], name='learning_rate_input')
-    train_step = tf.train.GradientDescentOptimizer(
-        learning_rate_input).minimize(cross_entropy_mean)
+    if FLAGS.use_rms:
+        train_step = tf.train.RMSPropOptimizer(
+        learning_rate_input,
+        decay=0.9,
+        momentum=0.9,
+        epsilon=1e-10
+        ).minimize(cross_entropy_mean)
+        
+    else:
+        train_step = tf.train.GradientDescentOptimizer(
+            learning_rate_input).minimize(cross_entropy_mean)
   predicted_indices = tf.argmax(logits, 1)
   expected_indices = tf.argmax(ground_truth_input, 1)
   correct_prediction = tf.equal(predicted_indices, expected_indices)
@@ -425,6 +434,10 @@ if __name__ == '__main__':
       type=bool,
       default=False,
       help='Whether to check for invalid numbers during processing')
-
+  parser.add_argument(
+      '--use_rms',
+      type=bool,
+      default=False,
+      help='Whether to use RMSprop optimizer instead of gradient descent')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
