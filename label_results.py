@@ -97,11 +97,12 @@ def label_wav(dir, labels, graph, output_file):
   for wav in os.listdir(dir):
     if not wav.endswith(".wav"):
       continue  
+    wav_path= dir +'/'+ wav
     """Loads the model and labels, and runs the inference to print predictions."""
-    if not wav or not tf.gfile.Exists(wav):
-      tf.logging.fatal('Audio file does not exist %s', wav)
+    if not wav_path or not tf.gfile.Exists(wav_path):
+      tf.logging.fatal('Audio file does not exist %s', wav_path)
   
-    with open(wav, 'rb') as wav_file:
+    with open(wav_path, 'rb') as wav_file:
       wav_data = wav_file.read()
       writer.writerow(
         {
