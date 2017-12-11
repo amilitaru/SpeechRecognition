@@ -93,7 +93,7 @@ def label_wav(dir, labels, graph, output_file):
   
   # load graph, which is stored in the default session
   load_graph(graph)
-  
+  label_list = "yes,no,up,down,left,right,on,off,stop,go,_silence_".split(',')
   for wav in os.listdir(dir):
     if not wav.endswith(".wav"):
       continue  
@@ -104,6 +104,8 @@ def label_wav(dir, labels, graph, output_file):
   
     with open(wav_path, 'rb') as wav_file:
       wav_data = wav_file.read()
+      label = run_graph(wav_data, labels_list)
+      label = 'unknown' if label not in label_list else label
       writer.writerow(
         {
         'fname': wav,
