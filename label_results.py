@@ -109,7 +109,7 @@ def label_wav(dir, labels, graph, output_file):
       writer.writerow(
         {
         'fname': wav,
-        'label': run_graph(wav_data, labels_list)
+        'label': label
         })
 
       
