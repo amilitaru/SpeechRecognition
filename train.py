@@ -347,12 +347,12 @@ if __name__ == '__main__':
   parser.add_argument(
       '--testing_percentage',
       type=int,
-      default=10,
+      default=5,
       help='What percentage of wavs to use as a test set.')
   parser.add_argument(
       '--validation_percentage',
       type=int,
-      default=10,
+      default=5,
       help='What percentage of wavs to use as a validation set.')
   parser.add_argument(
       '--sample_rate',
@@ -367,12 +367,12 @@ if __name__ == '__main__':
   parser.add_argument(
       '--window_size_ms',
       type=float,
-      default=30.0,
+      default=40.0,
       help='How long each spectrogram timeslice is',)
   parser.add_argument(
       '--window_stride_ms',
       type=float,
-      default=10.0,
+      default=20.0,
       help='How long each spectrogram timeslice is',)
   parser.add_argument(
       '--dct_coefficient_count',
@@ -382,17 +382,17 @@ if __name__ == '__main__':
   parser.add_argument(
       '--how_many_training_steps',
       type=str,
-      default='15000,3000',
+      default='20000,10000',
       help='How many training loops to run',)
   parser.add_argument(
       '--eval_step_interval',
       type=int,
-      default=400,
+      default=900,
       help='How often to evaluate the training results.')
   parser.add_argument(
       '--learning_rate',
       type=str,
-      default='0.001,0.0001',
+      default='0.0005,0.0001',
       help='How large a learning rate to use when training.')
   parser.add_argument(
       '--batch_size',
@@ -417,7 +417,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--save_step_interval',
       type=int,
-      default=100,
+      default=1000,
       help='Save model checkpoint every save_steps.')
   parser.add_argument(
       '--start_checkpoint',
