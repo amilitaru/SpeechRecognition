@@ -159,6 +159,10 @@ def main(_):
         epsilon=1e-10
         ).minimize(cross_entropy_mean)
         
+    else if FLAGS.use_adams:
+         train_step = tf.train.AdamOptimizer(
+		 learning_rate=learning_rate_input
+		 ).minimize(cross_entropy_mean)
     else:
         train_step = tf.train.GradientDescentOptimizer(
             learning_rate_input).minimize(cross_entropy_mean)
@@ -439,5 +443,10 @@ if __name__ == '__main__':
       type=bool,
       default=False,
       help='Whether to use RMSprop optimizer instead of gradient descent')
+  parser.add_argument(
+      '--use_adams',
+      type=bool,
+      default=False,
+      help='Whether to use Adam optimizer instead of gradient descent')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
