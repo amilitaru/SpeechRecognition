@@ -780,4 +780,38 @@ def create_mobinet_model(fingerprint_input, model_settings, is_training):
                             [-1, input_time_size, input_frequency_size, 1])
     logits, end_points = mobilenet(inputs=fingerprint_4d,num_classes=label_count,is_training=is_training)
     return logits
+"""
+Hello Edge paper
+"""
+    
+def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_cnn_large'):
+  
+  with tf.variable_scope(scope) as sc:
+  end_points_collection = sc.name + '_end_points'
+  with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
+                      activation_fn=None,
+                      outputs_collections=[end_points_collection]):
+    with slim.arg_scope([slim.batch_norm],
+                        is_training=is_training,
+                        activation_fn=tf.nn.relu,
+                        fused=True):
+      net = slim.convolution2d(fingerprint_input, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
+      net = slim.batch_norm(net, scope='conv_1/batch_norm') #may have to remove this
+      sc='conv_ds_2'
+      depthwise_conv = slim.separable_convolution2d(net,
+                                                num_outputs=None,
+                                                stride=1,
+                                                depth_multiplier=1,
+                                                kernel_size=3,
+                                                scope=sc+'/depthwise_conv')
+      bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+      pointwise_conv = slim.convolution2d(bn,
+                                        276,
+                                        kernel_size=3,
+                                        stride=1,
+                                        scope=sc+'/pointwise_conv')
+      bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+      #do the exact same thing for a few times
+      sc='conv_ds_3'
+  return bn
 
