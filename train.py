@@ -159,7 +159,7 @@ def main(_):
         epsilon=1e-10
         ).minimize(cross_entropy_mean)
         
-    else if FLAGS.use_adams:
+    elif FLAGS.use_adams:
          train_step = tf.train.AdamOptimizer(
 		 learning_rate=learning_rate_input
 		 ).minimize(cross_entropy_mean)
