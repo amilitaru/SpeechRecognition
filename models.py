@@ -111,11 +111,14 @@ def create_model(fingerprint_input, model_settings, model_architecture,
                                          is_training, runtime_settings)
   elif model_architecture == 'mobinet':
       return create_mobinet_model(fingerprint_input, model_settings,
-                                         is_training);
+                                         is_training)
+  elif model_architecture == 'ds_cnn_large':
+      return create_ds_cnn_large(fingerprint_input, model_settings,
+                                         is_training)
   else:
     raise Exception('model_architecture argument "' + model_architecture +
                     '" not recognized, should be one of "single_fc", "conv",' +
-                    ' "conv_elu, low_latency_conv, mobinet, or "low_latency_svdf"')
+                    ' "conv_elu, low_latency_conv, mobinet, ds_cnn_large, or "low_latency_svdf"')
 
 
 def load_variables_from_checkpoint(sess, start_checkpoint):
@@ -787,31 +790,96 @@ Hello Edge paper
 def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_cnn_large'):
   
   with tf.variable_scope(scope) as sc:
-  end_points_collection = sc.name + '_end_points'
-  with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
-                      activation_fn=None,
-                      outputs_collections=[end_points_collection]):
-    with slim.arg_scope([slim.batch_norm],
-                        is_training=is_training,
-                        activation_fn=tf.nn.relu,
-                        fused=True):
-      net = slim.convolution2d(fingerprint_input, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
-      net = slim.batch_norm(net, scope='conv_1/batch_norm') #may have to remove this
-      sc='conv_ds_2'
-      depthwise_conv = slim.separable_convolution2d(net,
+    end_points_collection = sc.name + '_end_points'
+    with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
+                        activation_fn=None,
+                        outputs_collections=[end_points_collection]):
+      with slim.arg_scope([slim.batch_norm],
+                          is_training=is_training,
+                          activation_fn=tf.nn.relu,
+                          fused=True):
+        net = slim.convolution2d(fingerprint_input, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
+        net = slim.batch_norm(net, scope='conv_1/batch_norm') #may have to remove this
+        sc='conv_ds_2'
+        depthwise_conv = slim.separable_convolution2d(net,
+                                                  num_outputs=None,
+                                                  stride=1,
+                                                  depth_multiplier=1,
+                                                  kernel_size=3,
+                                                  scope=sc+'/depthwise_conv')
+        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+        pointwise_conv = slim.convolution2d(bn,
+                                          276,
+                                          kernel_size=3,
+                                          stride=1,
+                                          scope=sc+'/pointwise_conv')
+        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+
+        sc='conv_ds_3'
+        depthwise_conv = slim.separable_convolution2d(bn,
                                                 num_outputs=None,
                                                 stride=1,
                                                 depth_multiplier=1,
                                                 kernel_size=3,
                                                 scope=sc+'/depthwise_conv')
-      bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-      pointwise_conv = slim.convolution2d(bn,
+        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+        pointwise_conv = slim.convolution2d(bn,
                                         276,
                                         kernel_size=3,
                                         stride=1,
                                         scope=sc+'/pointwise_conv')
-      bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
-      #do the exact same thing for a few times
-      sc='conv_ds_3'
-  return bn
+        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+      
+        sc='conv_ds_4'
+        depthwise_conv = slim.separable_convolution2d(bn,
+                                                num_outputs=None,
+                                                stride=1,
+                                                depth_multiplier=1,
+                                                kernel_size=3,
+                                                scope=sc+'/depthwise_conv')
+        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+        pointwise_conv = slim.convolution2d(bn,
+                                        276,
+                                        kernel_size=3,
+                                        stride=1,
+                                        scope=sc+'/pointwise_conv')
+        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+
+        sc='conv_ds_5'
+        depthwise_conv = slim.separable_convolution2d(bn,
+                                                num_outputs=None,
+                                                stride=1,
+                                                depth_multiplier=1,
+                                                kernel_size=3,
+                                                scope=sc+'/depthwise_conv')
+        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+        pointwise_conv = slim.convolution2d(bn,
+                                        276,
+                                        kernel_size=3,
+                                        stride=1,
+                                        scope=sc+'/pointwise_conv')
+        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+      
+        sc='conv_ds_6'
+        depthwise_conv = slim.separable_convolution2d(bn,
+                                                num_outputs=None,
+                                                stride=1,
+                                                depth_multiplier=1,
+                                                kernel_size=3,
+                                                scope=sc+'/depthwise_conv')
+        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
+        pointwise_conv = slim.convolution2d(bn,
+                                        276,
+                                        kernel_size=3,
+                                        stride=1,
+                                        scope=sc+'/pointwise_conv')
+        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+
+        net = slim.avg_pool2d(bn, 3, scope='avg_pool_7')
+        net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+      
+        label_count = model_settings['label_count']
+        logits = slim.fully_connected(net, label_count, activation_fn=None, scope='fc_16')
+  
+  return logits
 
