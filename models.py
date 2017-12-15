@@ -788,7 +788,11 @@ Hello Edge paper
 """
     
 def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_cnn_large'):
-  
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+
   with tf.variable_scope(scope) as sc:
     end_points_collection = sc.name + '_end_points'
     with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
@@ -798,7 +802,7 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
                           is_training=is_training,
                           activation_fn=tf.nn.relu,
                           fused=True):
-        net = slim.convolution2d(fingerprint_input, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
+        net = slim.convolution2d(fingerprint_4d, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
         net = slim.batch_norm(net, scope='conv_1/batch_norm') #may have to remove this
         sc='conv_ds_2'
         depthwise_conv = slim.separable_convolution2d(net,
