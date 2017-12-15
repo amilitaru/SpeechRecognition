@@ -764,7 +764,7 @@ def mobilenet(inputs,
         net = slim.avg_pool2d(net, [7, 7], scope='avg_pool_15')
 
     end_points = slim.utils.convert_collection_to_dict(end_points_collection)
-    net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+    #net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
     end_points['squeeze'] = net
     logits = slim.fully_connected(net, num_classes, activation_fn=None, scope='fc_16')
     predictions = slim.softmax(logits, scope='Predictions')
@@ -792,7 +792,8 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
   input_time_size = model_settings['spectrogram_length']
   fingerprint_4d = tf.reshape(fingerprint_input,
                               [-1, input_time_size, input_frequency_size, 1])
-
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
   with tf.variable_scope(scope) as sc:
     end_points_collection = sc.name + '_end_points'
     with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
@@ -884,6 +885,8 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
       
         label_count = model_settings['label_count']
         logits = slim.fully_connected(net, label_count, activation_fn=None, scope='fc_16')
+  if is_training:
+    return logits,dropout_prob 
   
   return logits
 
