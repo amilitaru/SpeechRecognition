@@ -107,7 +107,7 @@ def label_wav(dir, labels, graph, output_file):
         with open(wav_path, 'rb') as wav_file:
           wav_data = wav_file.read()
           predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
-          label = predictions.argsort()[-1:][::-1][0]
+          label = labels_list [ predictions.argsort()[-1:][::-1][0] ]
           label = 'unknown' if label not in label_list else label
           label = 'silence' if label == '_silence_' else label
           writer.writerow(
