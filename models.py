@@ -808,7 +808,7 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         sc='conv_ds_2'
         depthwise_conv = slim.separable_convolution2d(net,
                                                   num_outputs=None,
-                                                  stride=1,
+                                                  stride=[1, 1, 1, 1],
                                                   depth_multiplier=1,
                                                   kernel_size=3,
                                                   scope=sc+'/depthwise_conv')
@@ -816,14 +816,14 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         pointwise_conv = slim.convolution2d(bn,
                                           276,
                                           kernel_size=3,
-                                          stride=1,
+                                          stride=[1, 1, 1, 1],
                                           scope=sc+'/pointwise_conv')
         bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
 
         sc='conv_ds_3'
         depthwise_conv = slim.separable_convolution2d(bn,
                                                 num_outputs=None,
-                                                stride=1,
+                                                stride=[1, 1, 1, 1],
                                                 depth_multiplier=1,
                                                 kernel_size=3,
                                                 scope=sc+'/depthwise_conv')
@@ -831,14 +831,14 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         pointwise_conv = slim.convolution2d(bn,
                                         276,
                                         kernel_size=3,
-                                        stride=1,
+                                        stride=[1, 1, 1, 1],
                                         scope=sc+'/pointwise_conv')
         bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
       
         sc='conv_ds_4'
         depthwise_conv = slim.separable_convolution2d(bn,
                                                 num_outputs=None,
-                                                stride=1,
+                                                stride=[1, 1, 1, 1],
                                                 depth_multiplier=1,
                                                 kernel_size=3,
                                                 scope=sc+'/depthwise_conv')
@@ -846,14 +846,14 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         pointwise_conv = slim.convolution2d(bn,
                                         276,
                                         kernel_size=3,
-                                        stride=1,
+                                        stride=[1, 1, 1, 1],
                                         scope=sc+'/pointwise_conv')
         bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
 
         sc='conv_ds_5'
         depthwise_conv = slim.separable_convolution2d(bn,
                                                 num_outputs=None,
-                                                stride=1,
+                                                stride=[1, 1, 1, 1],
                                                 depth_multiplier=1,
                                                 kernel_size=3,
                                                 scope=sc+'/depthwise_conv')
@@ -861,14 +861,14 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         pointwise_conv = slim.convolution2d(bn,
                                         276,
                                         kernel_size=3,
-                                        stride=1,
+                                        stride=[1, 1, 1, 1],
                                         scope=sc+'/pointwise_conv')
         bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
       
         sc='conv_ds_6'
         depthwise_conv = slim.separable_convolution2d(bn,
                                                 num_outputs=None,
-                                                stride=1,
+                                                stride=[1, 1, 1, 1],
                                                 depth_multiplier=1,
                                                 kernel_size=3,
                                                 scope=sc+'/depthwise_conv')
@@ -876,7 +876,7 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
         pointwise_conv = slim.convolution2d(bn,
                                         276,
                                         kernel_size=3,
-                                        stride=1,
+                                        stride=[1, 1, 1, 1],
                                         scope=sc+'/pointwise_conv')
         bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
 
