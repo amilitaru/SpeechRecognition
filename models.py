@@ -923,7 +923,7 @@ def create_test_cnn(fingerprint_input, model_settings, is_training,scope='ds_tes
   sixth_conv = tf.layers.separable_conv2d(fourth_conv, filters=276, kernel_size=[3,3],strides=[1,1])
 
   
-  final_conv = tf.layers.avg_pool(sixth_conv, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+  final_conv = tf.nn.avg_pool(sixth_conv, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
   
   final_conv_shape = final_conv.get_shape()
   final_conv_output_width = final_conv_shape[2]
