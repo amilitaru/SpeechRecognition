@@ -915,9 +915,6 @@ def create_test_cnn(fingerprint_input, model_settings, is_training,scope='ds_tes
   else:
     first_dropout = first_relu
 
-  second_filter_width = 4
-  second_filter_height = 10
-  second_filter_count = 64
   
   second_conv = tf.layers.separable_conv2d(first_dropout, filters=276, kernel_size=[3,3],strides=[2,2])
   third_conv = tf.layers.separable_conv2d(second_conv, filters=276, kernel_size=[3,3],strides=[1,1])
