@@ -928,7 +928,7 @@ def create_test_cnn(fingerprint_input, model_settings, is_training,scope='ds_tes
   final_conv_shape = final_conv.get_shape()
   final_conv_output_width = final_conv_shape[2]
   final_conv_output_height = final_conv_shape[1]
-  
+  final_filter_count = 276
   final_conv_element_count = int(
       final_conv_output_width * final_conv_output_height *
       final_filter_count)
