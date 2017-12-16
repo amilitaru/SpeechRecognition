@@ -113,7 +113,7 @@ def create_model(fingerprint_input, model_settings, model_architecture,
       return create_mobinet_model(fingerprint_input, model_settings,
                                          is_training)
   elif model_architecture == 'ds_cnn_large':
-      return create_ds_cnn_large(fingerprint_input, model_settings,
+      return create_test_cnn(fingerprint_input, model_settings,
                                          is_training)
   else:
     raise Exception('model_architecture argument "' + model_architecture +
@@ -889,4 +889,65 @@ def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds
     return logits,dropout_prob 
   
   return logits
+  
+  
+def create_test_cnn(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
+  
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  first_filter_width = 4
+  first_filter_height = 10
+  first_filter_count = 276
+  first_weights = tf.Variable(
+      tf.truncated_normal(
+          [first_filter_height, first_filter_width, 1, first_filter_count],
+          stddev=0.01))
+  first_bias = tf.Variable(tf.zeros([first_filter_count]))
+  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
+                            'SAME') + first_bias
+  first_relu = tf.nn.relu(first_conv)
+  if is_training:
+    first_dropout = tf.nn.dropout(first_relu, dropout_prob)
+  else:
+    first_dropout = first_relu
 
+  second_filter_width = 4
+  second_filter_height = 10
+  second_filter_count = 64
+  
+  second_conv = tf.layers.separable_conv2d(first_dropout, filters=276, kernel_size=[3,3],strides=[2,2])
+  third_conv = tf.layers.separable_conv2d(second_conv, filters=276, kernel_size=[3,3],strides=[1,1])
+  fourth_conv = tf.layers.separable_conv2d(third_conv, filters=276, kernel_size=[3,3],strides=[1,1])
+  fifth_conv = tf.layers.separable_conv2d(fourth_conv, filters=276, kernel_size=[3,3],strides=[1,1])
+  sixth_conv = tf.layers.separable_conv2d(fourth_conv, filters=276, kernel_size=[3,3],strides=[1,1])
+
+  
+  final_conv = tf.layers.avg_pool(sixth_conv, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+  
+  final_conv_shape = final_conv.get_shape()
+  final_conv_output_width = final_conv_shape[2]
+  final_conv_output_height = final_conv_shape[1]
+  
+  final_conv_element_count = int(
+      final_conv_output_width * final_conv_output_height *
+      final_filter_count)
+  flattened_final_conv = tf.reshape(final_conv,
+                                     [-1, final_conv_element_count])
+  label_count = model_settings['label_count']
+  
+  final_fc_weights = tf.Variable(
+      tf.truncated_normal(
+          [final_conv_element_count, label_count], stddev=0.01))
+  final_fc_bias = tf.Variable(tf.zeros([label_count]))
+  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+  if is_training:
+    return final_fc, dropout_prob
+  else:
+    return final_fc
+
+  
