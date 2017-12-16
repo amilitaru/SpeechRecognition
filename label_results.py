@@ -94,23 +94,27 @@ def label_wav(dir, labels, graph, output_file):
   # load graph, which is stored in the default session
   load_graph(graph)
   label_list = "yes,no,up,down,left,right,on,off,stop,go,_silence_".split(',')
-  for wav in os.listdir(dir):
-    if not wav.endswith(".wav"):
-      continue  
-    wav_path= dir +'/'+ wav
-    """Loads the model and labels, and runs the inference to print predictions."""
-    if not wav_path or not tf.gfile.Exists(wav_path):
-      tf.logging.fatal('Audio file does not exist %s', wav_path)
-  
-    with open(wav_path, 'rb') as wav_file:
-      wav_data = wav_file.read()
-      label = run_graph(wav_data, labels_list)
-      label = 'unknown' if label not in label_list else label
-      writer.writerow(
-        {
-        'fname': wav,
-        'label': label
-        })
+  with tf.Session() as sess:
+      softmax_tensor = sess.graph.get_tensor_by_name('labels_softmax:0')
+      for wav in os.listdir(dir):
+        if not wav.endswith(".wav"):
+          continue  
+        wav_path= dir +'/'+ wav
+        """Loads the model and labels, and runs the inference to print predictions."""
+        if not wav_path or not tf.gfile.Exists(wav_path):
+          tf.logging.fatal('Audio file does not exist %s', wav_path)
+      
+        with open(wav_path, 'rb') as wav_file:
+          wav_data = wav_file.read()
+          predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
+          label = predictions.argsort()[-num_top_predictions:][::-1][0]
+          label = 'unknown' if label not in label_list else label
+          label = 'silence' if label == '_silence_' else label
+          writer.writerow(
+            {
+            'fname': wav,
+            'label': label
+            })
 
       
 
