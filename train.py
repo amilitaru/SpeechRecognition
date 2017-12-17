@@ -156,7 +156,7 @@ def main(_):
         tf.nn.softmax_cross_entropy_with_logits(
             labels=ground_truth_input, logits=logits))
   tf.summary.scalar('cross_entropy', cross_entropy_mean)
-  with tf.name_scope('train'), tf.control_dependencies(control_dependencies):
+  with tf.name_scope('train'), tf.control_dependencies(update_ops):
     learning_rate_input = tf.placeholder(
         tf.float32, [], name='learning_rate_input')
     if FLAGS.use_rms:
