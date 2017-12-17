@@ -135,12 +135,20 @@ def main(_):
   ground_truth_input = tf.placeholder(
       tf.float32, [None, label_count], name='groundtruth_input')
 
+
   # Optionally we can add runtime checks to spot when NaNs or other symptoms of
   # numerical errors start occurring during training.
   control_dependencies = []
   if FLAGS.check_nans:
     checks = tf.add_check_numerics_ops()
     control_dependencies = [checks]
+
+  #This is needed for the Batch Normalization code. See the note below from tf doc 
+  #Note: when training, the moving_mean and moving_variance need to be updated.
+  #By default the update ops are placed in tf.GraphKeys.UPDATE_OPS, so they need 
+  #to be added as a dependency to the train_op. 
+  update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+  control_dependencies.append(update_ops)
 
   # Create the back propagation and training evaluation machinery in the graph.
   with tf.name_scope('cross_entropy'):

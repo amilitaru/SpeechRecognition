@@ -980,41 +980,54 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
   else:
     first_dropout = first_relu
 
+  bn = tf.layers.batch_normalization(first_dropout)
   
-  second_conv = tf.layers.separable_conv2d(first_dropout, filters=276, kernel_size=[3,3],strides=[2,2], activation=tf.nn.relu)
+  second_conv = tf.layers.separable_conv2d(bn, 
+                                           filters=276, 
+                                           kernel_size=[3,3],
+                                           strides=[2,2], 
+                                           activation=tf.nn.relu)
     
   if is_training:
     second_dropout = tf.nn.dropout(second_conv, dropout_prob)
   else:
     second_dropout = second_conv
+    
+  bn = tf.layers.batch_normalization(second_dropout)
 
-
-  third_conv = tf.layers.separable_conv2d(second_dropout, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
+  third_conv = tf.layers.separable_conv2d(bn, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
 
   if is_training:
     third_dropout = tf.nn.dropout(third_conv, dropout_prob)
   else:
     third_dropout = third_conv
+
+  bn = tf.layers.batch_normalization(third_dropout)
  
   
-  fourth_conv = tf.layers.separable_conv2d(third_dropout, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
+  fourth_conv = tf.layers.separable_conv2d(bn, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
   
   if is_training:
     fourth_dropout = tf.nn.dropout(fourth_conv , dropout_prob)
   else:
     fourth_dropout = fourth_conv
   
-  fifth_conv = tf.layers.separable_conv2d(fourth_dropout, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
+  bn = tf.layers.batch_normalization(fourth_dropout)
+
+  
+  fifth_conv = tf.layers.separable_conv2d(bn, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
 
   if is_training:
     fifth_dropout = tf.nn.dropout(fifth_conv, dropout_prob)
   else:
     fifth_dropout = fifth_conv
-  
-  sixth_conv = tf.layers.separable_conv2d(fifth_dropout, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
+
+  bn = tf.layers.batch_normalization(fifth_dropout)
+
+  sixth_conv = tf.layers.separable_conv2d(bn, filters=276, kernel_size=[3,3], strides=[1,1], activation=tf.nn.relu)
 
   
-  final_conv = tf.nn.avg_pool(sixth_conv, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+  final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
   
   final_conv_shape = final_conv.get_shape()
   final_conv_output_width = final_conv_shape[2]
