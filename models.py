@@ -966,20 +966,22 @@ def _create_ds_conv(input, is_training, downsample):
                                          padding='SAME', 
                                          activation=tf.nn.relu)
   bn = tf.layers.batch_normalization(depthwise_conv)
-  
+  first_relu = tf.nn.relu(bn)
   """
   if is_training:
     _dropout = tf.nn.dropout(bn, dropout_prob)
   else:
     _dropout = bn
   """  
-  point_conv =  tf.layers.conv2d(bn, 
+  point_conv =  tf.layers.conv2d(first_relu, 
                              filters=276,
                              kernel_size=[1,1],
                              padding='SAME',
                              activation=tf.nn.relu)
   
-  return tf.layers.batch_normalization(point_conv)
+  bn = tf.layers.batch_normalization(point_conv)
+  
+  return tf.nn.relu(bn)
 
 
   
@@ -1002,6 +1004,8 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
   first_bias = tf.Variable(tf.zeros([first_filter_count]))
   first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
                             'SAME') + first_bias
+  
+  
   first_relu = tf.nn.relu(first_conv)
   if is_training:
     first_dropout = tf.nn.dropout(first_relu, dropout_prob)
