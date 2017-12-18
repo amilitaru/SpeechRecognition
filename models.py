@@ -965,7 +965,7 @@ def _create_ds_conv(input, is_training, downsample):
                                          strides=[_stride,_stride],
                                          padding='SAME', 
                                          activation=tf.nn.relu)
-  bn = tf.layers.batch_normalization(output)
+  bn = tf.layers.batch_normalization(depthwise_conv)
   
   """
   if is_training:
