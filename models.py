@@ -980,7 +980,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
   else:
     first_dropout = first_relu
 
-    def _create_ds_conv(input, is_training, downsample, scope):
+    def _create_ds_conv(input, is_training, downsample):
   
       _stride = 2 if downsample else 1
       #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
@@ -1007,7 +1007,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
       return tf.layers.batch_normalization(point_conv)
     
     
-  second_conv = _create_ds_conv(first_dropout, is_training, downsample=True, scope)
+  second_conv = _create_ds_conv(first_dropout, is_training, downsample=True)
     
   if is_training:
     second_dropout = tf.nn.dropout(second_conv, dropout_prob)
@@ -1015,7 +1015,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
     second_dropout = second_conv
     
   
-  third_conv = _create_ds_conv(second_dropout, is_training, downsample=False, scope)
+  third_conv = _create_ds_conv(second_dropout, is_training, downsample=False)
   
   if is_training:
     third_dropout = tf.nn.dropout(third_conv, dropout_prob)
@@ -1024,7 +1024,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
 
  
   
-  fourth_conv = _create_ds_conv(third_dropout, is_training, downsample=False, scope)
+  fourth_conv = _create_ds_conv(third_dropout, is_training, downsample=False)
   
   if is_training:
     fourth_dropout = tf.nn.dropout(fourth_conv , dropout_prob)
@@ -1032,7 +1032,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
     fourth_dropout = fourth_conv
  
   
-  fifth_conv = _create_ds_conv(fourth_dropout, is_training, downsample=False, scope)
+  fifth_conv = _create_ds_conv(fourth_dropout, is_training, downsample=False)
   
   if is_training:
     fifth_dropout = tf.nn.dropout(fifth_conv, dropout_prob)
@@ -1040,7 +1040,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
     fifth_dropout = fifth_conv
 
 
-  sixth_conv = _create_ds_conv(fifth_dropout, is_training, downsample=False, scope)
+  sixth_conv = _create_ds_conv(fifth_dropout, is_training, downsample=False)
 
   
   final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
