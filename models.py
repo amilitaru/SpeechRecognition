@@ -955,31 +955,6 @@ def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_c
   else:
     return final_fc
 
-  
-def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
-  
-  if is_training:
-    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
-  input_frequency_size = model_settings['dct_coefficient_count']
-  input_time_size = model_settings['spectrogram_length']
-  fingerprint_4d = tf.reshape(fingerprint_input,
-                              [-1, input_time_size, input_frequency_size, 1])
-  first_filter_width = 4
-  first_filter_height = 10
-  first_filter_count = 276
-  first_weights = tf.Variable(
-      tf.truncated_normal(
-          [first_filter_height, first_filter_width, 1, first_filter_count],
-          stddev=0.01))
-  first_bias = tf.Variable(tf.zeros([first_filter_count]))
-  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
-                            'SAME') + first_bias
-  first_relu = tf.nn.relu(first_conv)
-  if is_training:
-    first_dropout = tf.nn.dropout(first_relu, dropout_prob)
-  else:
-    first_dropout = first_relu
-
     def _create_ds_conv(input, is_training, downsample):
   
       _stride = 2 if downsample else 1
@@ -1005,6 +980,32 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
                                  activation=tf.nn.relu)
       
       return tf.layers.batch_normalization(point_conv)
+  
+def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
+  
+  
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  first_filter_width = 4
+  first_filter_height = 10
+  first_filter_count = 276
+  first_weights = tf.Variable(
+      tf.truncated_normal(
+          [first_filter_height, first_filter_width, 1, first_filter_count],
+          stddev=0.01))
+  first_bias = tf.Variable(tf.zeros([first_filter_count]))
+  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
+                            'SAME') + first_bias
+  first_relu = tf.nn.relu(first_conv)
+  if is_training:
+    first_dropout = tf.nn.dropout(first_relu, dropout_prob)
+  else:
+    first_dropout = first_relu
+
     
     
   second_conv = _create_ds_conv(first_dropout, is_training, downsample=True)
