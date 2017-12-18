@@ -959,7 +959,7 @@ def _create_ds_conv(input, is_training, downsample):
 
   _stride = 2 if downsample else 1
   #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
-  depthwise_conv = tf.layers.separable_conv2d(bn, 
+  depthwise_conv = tf.layers.separable_conv2d(input, 
                                          filters=276, 
                                          kernel_size=[3,3],
                                          strides=[_stride,_stride],
