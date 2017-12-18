@@ -955,31 +955,33 @@ def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_c
   else:
     return final_fc
 
-    def _create_ds_conv(input, is_training, downsample):
+def _create_ds_conv(input, is_training, downsample):
+
+  _stride = 2 if downsample else 1
+  #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
+  depthwise_conv = tf.layers.separable_conv2d(bn, 
+                                         filters=276, 
+                                         kernel_size=[3,3],
+                                         strides=[_stride,_stride],
+                                         padding='SAME', 
+                                         activation=tf.nn.relu)
+  bn = tf.layers.batch_normalization(output)
   
-      _stride = 2 if downsample else 1
-      #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
-      depthwise_conv = tf.layers.separable_conv2d(bn, 
-                                             filters=276, 
-                                             kernel_size=[3,3],
-                                             strides=[_stride,_stride],
-                                             padding='SAME', 
-                                             activation=tf.nn.relu)
-      bn = tf.layers.batch_normalization(output)
-      
-      """
-      if is_training:
-        _dropout = tf.nn.dropout(bn, dropout_prob)
-      else:
-        _dropout = bn
-      """  
-      point_conv =  tf.layers.conv2d(bn, 
-                                 filters=276,
-                                 kernel_size=[1,1],
-                                 padding='SAME',
-                                 activation=tf.nn.relu)
-      
-      return tf.layers.batch_normalization(point_conv)
+  """
+  if is_training:
+    _dropout = tf.nn.dropout(bn, dropout_prob)
+  else:
+    _dropout = bn
+  """  
+  point_conv =  tf.layers.conv2d(bn, 
+                             filters=276,
+                             kernel_size=[1,1],
+                             padding='SAME',
+                             activation=tf.nn.relu)
+  
+  return tf.layers.batch_normalization(point_conv)
+
+
   
 def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
   
