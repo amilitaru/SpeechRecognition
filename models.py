@@ -980,7 +980,7 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
   else:
     first_dropout = first_relu
 
-    def _create_ds_conv(input, is_training, downsample=False, scope):
+    def _create_ds_conv(input, is_training, downsample, scope):
   
       _stride = 2 if downsample else 1
       #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
