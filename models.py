@@ -787,112 +787,34 @@ def create_mobinet_model(fingerprint_input, model_settings, is_training):
                             [-1, input_time_size, input_frequency_size, 1])
     logits, end_points = mobilenet(inputs=fingerprint_4d,num_classes=label_count,is_training=is_training)
     return logits
+
+
 """
 Hello Edge paper
 """
-    
-def create_ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_cnn_large'):
-  input_frequency_size = model_settings['dct_coefficient_count']
-  input_time_size = model_settings['spectrogram_length']
-  fingerprint_4d = tf.reshape(fingerprint_input,
-                              [-1, input_time_size, input_frequency_size, 1])
-  if is_training:
-    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
-  with tf.variable_scope(scope) as sc:
-    end_points_collection = sc.name + '_end_points'
-    with slim.arg_scope([slim.convolution2d, slim.separable_convolution2d],
-                        activation_fn=None,
-                        outputs_collections=[end_points_collection]):
-      with slim.arg_scope([slim.batch_norm],
-                          is_training=is_training,
-                          activation_fn=tf.nn.relu,
-                          fused=True):
-        net = slim.convolution2d(fingerprint_4d, 276, [10, 4], stride=[2,2], padding='SAME', scope='conv_1')
-        net = slim.batch_norm(net, scope='conv_1/batch_norm') #may have to remove this
-        sc='conv_ds_2'
-        depthwise_conv = slim.separable_convolution2d(net,
-                                                  num_outputs=None,
-                                                  stride=[1, 1, 1, 1],
-                                                  depth_multiplier=1,
-                                                  kernel_size=3,
-                                                  scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn,
-                                          276,
-                                          kernel_size=3,
-                                          stride=[1, 1, 1, 1],
-                                          scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+def _create_ds_conv(input, is_training, downsample):
 
-        sc='conv_ds_3'
-        depthwise_conv = slim.separable_convolution2d(bn,
-                                                num_outputs=None,
-                                                stride=[1, 1, 1, 1],
-                                                depth_multiplier=1,
-                                                kernel_size=3,
-                                                scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn,
-                                        276,
-                                        kernel_size=3,
-                                        stride=[1, 1, 1, 1],
-                                        scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
-      
-        sc='conv_ds_4'
-        depthwise_conv = slim.separable_convolution2d(bn,
-                                                num_outputs=None,
-                                                stride=[1, 1, 1, 1],
-                                                depth_multiplier=1,
-                                                kernel_size=3,
-                                                scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn,
-                                        276,
-                                        kernel_size=3,
-                                        stride=[1, 1, 1, 1],
-                                        scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
+  _stride = 2 if downsample else 1
+  #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
+  depthwise_conv = tf.layers.separable_conv2d(input, 
+                                         filters=276, 
+                                         kernel_size=[3,3],
+                                         strides=[_stride,_stride],
+                                         padding='SAME', 
+                                         activation=tf.nn.relu)
+  bn = tf.layers.batch_normalization(depthwise_conv)
+  first_relu = tf.nn.relu(bn)
 
-        sc='conv_ds_5'
-        depthwise_conv = slim.separable_convolution2d(bn,
-                                                num_outputs=None,
-                                                stride=[1, 1, 1, 1],
-                                                depth_multiplier=1,
-                                                kernel_size=3,
-                                                scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn,
-                                        276,
-                                        kernel_size=3,
-                                        stride=[1, 1, 1, 1],
-                                        scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
-      
-        sc='conv_ds_6'
-        depthwise_conv = slim.separable_convolution2d(bn,
-                                                num_outputs=None,
-                                                stride=[1, 1, 1, 1],
-                                                depth_multiplier=1,
-                                                kernel_size=3,
-                                                scope=sc+'/depthwise_conv')
-        bn = slim.batch_norm(depthwise_conv, scope=sc+'/dw_batch_norm')
-        pointwise_conv = slim.convolution2d(bn,
-                                        276,
-                                        kernel_size=3,
-                                        stride=[1, 1, 1, 1],
-                                        scope=sc+'/pointwise_conv')
-        bn = slim.batch_norm(pointwise_conv, scope=sc+'/pw_batch_norm')
-
-        net = slim.avg_pool2d(bn, 3, scope='avg_pool_7')
-        net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-      
-        label_count = model_settings['label_count']
-        logits = slim.fully_connected(net, label_count, activation_fn=None, scope='fc_16')
-  if is_training:
-    return logits,dropout_prob 
+  point_conv =  tf.layers.conv2d(first_relu, 
+                             filters=276,
+                             kernel_size=[1,1],
+                             padding='SAME',
+                             activation=tf.nn.relu)
   
-  return logits
+  bn = tf.layers.batch_normalization(point_conv)
+  
+  return tf.nn.relu(bn)
+
   
   
 def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
@@ -913,25 +835,20 @@ def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_c
   first_bias = tf.Variable(tf.zeros([first_filter_count]))
   first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
                             'SAME') + first_bias
+  
+  
   first_relu = tf.nn.relu(first_conv)
-  if is_training:
-    first_dropout = tf.nn.dropout(first_relu, dropout_prob)
-  else:
-    first_dropout = first_relu
+
+    
+    
+  second_conv = _create_ds_conv(first_relu, is_training, downsample=True)  
+  third_conv = _create_ds_conv(second_conv, is_training, downsample=False)  
+  fourth_conv = _create_ds_conv(third_conv, is_training, downsample=False)
+  fifth_conv = _create_ds_conv(fourth_conv, is_training, downsample=False)
+  sixth_conv = _create_ds_conv(fifth_conv, is_training, downsample=False)
 
   
-  second_conv = tf.layers.separable_conv2d(first_dropout, filters=276, kernel_size=[3,3],strides=[2,2])
-  
-  third_conv = tf.layers.separable_conv2d(second_conv, filters=276, kernel_size=[3,3],strides=[1,1])
-  
-  fourth_conv = tf.layers.separable_conv2d(third_conv, filters=276, kernel_size=[3,3],strides=[1,1])
-  
-  fifth_conv = tf.layers.separable_conv2d(fourth_conv, filters=276, kernel_size=[3,3],strides=[1,1])
-  
-  sixth_conv = tf.layers.separable_conv2d(fourth_conv, filters=276, kernel_size=[3,3],strides=[1,1])
-
-  
-  final_conv = tf.nn.avg_pool(sixth_conv, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+  final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
   
   final_conv_shape = final_conv.get_shape()
   final_conv_output_width = final_conv_shape[2]
@@ -954,34 +871,6 @@ def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_c
     return final_fc, dropout_prob
   else:
     return final_fc
-
-def _create_ds_conv(input, is_training, downsample):
-
-  _stride = 2 if downsample else 1
-  #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
-  depthwise_conv = tf.layers.separable_conv2d(input, 
-                                         filters=276, 
-                                         kernel_size=[3,3],
-                                         strides=[_stride,_stride],
-                                         padding='SAME', 
-                                         activation=tf.nn.relu)
-  bn = tf.layers.batch_normalization(depthwise_conv)
-  first_relu = tf.nn.relu(bn)
-  """
-  if is_training:
-    _dropout = tf.nn.dropout(bn, dropout_prob)
-  else:
-    _dropout = bn
-  """  
-  point_conv =  tf.layers.conv2d(first_relu, 
-                             filters=276,
-                             kernel_size=[1,1],
-                             padding='SAME',
-                             activation=tf.nn.relu)
-  
-  bn = tf.layers.batch_normalization(point_conv)
-  
-  return tf.nn.relu(bn)
 
 
   
