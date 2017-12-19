@@ -24,6 +24,7 @@ import math
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+import resnet_model
 
 def prepare_model_settings(label_count, sample_rate, clip_duration_ms,
                            window_size_ms, window_stride_ms,
@@ -117,6 +118,9 @@ def create_model(fingerprint_input, model_settings, model_architecture,
                                          is_training)
   elif model_architecture == 'ds_cnn_large_dropout':
       return ds_cnn_large_dropout(fingerprint_input, model_settings,
+                                         is_training)
+  elif model_architecture == 'resnet':
+      return create_resnet(fingerprint_input, model_settings,
                                          is_training)
 
   else:
@@ -962,3 +966,18 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
     return final_fc, dropout_prob
   else:
     return final_fc
+
+
+def create_resnet(fingerprint_input, model_settings, is_training,scope='resnet_cnn'):
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  label_count = model_settings['label_count']
+
+  
+  return imagenet_resnet_v2(18,label_count,'channels_last')
+
+
