@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from _tracemalloc import is_tracing
 """Model definitions for simple speech recognition.
 
 """
@@ -1312,6 +1313,8 @@ def create_resnet(fingerprint_input, model_settings, is_training,scope='resnet_c
   label_count = model_settings['label_count']
 
   
-  return imagenet_resnet_v2(18,label_count,'channels_last')
+  model_generator =  imagenet_resnet_v2(18,label_count,'channels_last')
+  
+  return model_generator(fingerprint_4d, is_training)
 
 
