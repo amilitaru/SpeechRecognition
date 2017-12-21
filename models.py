@@ -1355,20 +1355,33 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
 
   inputs = batch_norm_relu(inputs, is_training, data_format)
   
-  inputs = tf.layers.average_pooling2d(
-      inputs=inputs, pool_size=7, strides=1, padding='VALID',
-      data_format=data_format)
   
-  inputs = tf.identity(inputs, 'final_avg_pool')
-  inputs = tf.reshape(inputs,
-                      [-1, 512])
-  inputs = tf.layers.dense(inputs=inputs, units=model_settings['label_count'])
-  inputs = tf.identity(inputs, 'final_dense')
+  
+  final_conv_shape = inputs.get_shape()
+
+  final_filter_count = 512
+  final_conv_output_width = final_conv_shape[1]
+  final_conv_output_height = final_conv_shape[0]
+  
+  final_conv_element_count = int(final_conv_output_width * final_conv_output_height *
+      final_filter_count)
+  flattened_final_conv = tf.reshape(final_conv,
+                                     [-1, final_conv_element_count])
+  label_count = model_settings['label_count']
+  
+  final_fc_weights = tf.Variable(
+      tf.truncated_normal(
+          [final_conv_element_count, label_count], stddev=0.01))
+  final_fc_bias = tf.Variable(tf.zeros([label_count]))
+  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+ 
+ 
  
   if is_training:
-    return inputs, dropout_prob
+    return final_fc, dropout_prob
   else:
-    return inputs
+    return final_fc
 
   
   
