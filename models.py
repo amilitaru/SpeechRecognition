@@ -1375,9 +1375,9 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   
   
   if is_training:
-    return inputs, dropout_prob
+    return final_fc, dropout_prob
   else:
-    return inputs
+    return final_fc
 
   
   
