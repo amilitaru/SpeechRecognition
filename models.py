@@ -1317,6 +1317,7 @@ def create_resnet(fingerprint_input, model_settings, is_training,scope='resnet_c
 def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resnet_cnn'):
   if is_training:
     dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+    
   input_frequency_size = model_settings['dct_coefficient_count']
   input_time_size = model_settings['spectrogram_length']
   fingerprint_4d = tf.reshape(fingerprint_input,
@@ -1327,11 +1328,11 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   
   inputs = conv2d_fixed_padding(
     inputs=fingerprint_4d, filters=64, 
-    kernel_size=4, strides=2, data_format=data_format)
+    kernel_size=4, strides=1, data_format=data_format)
   
   inputs = tf.identity(inputs, 'initial_conv')
   inputs = tf.layers.max_pooling2d(
-      inputs=inputs, pool_size=3, strides=2, padding='SAME',
+      inputs=inputs, pool_size=2, strides=1, padding='SAME',
       data_format=data_format)
   inputs = tf.identity(inputs, 'initial_max_pool')
 
@@ -1341,43 +1342,33 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=128, block_fn=building_block, blocks=layers[1],
-      strides=2, is_training=is_training, name='block_layer2',
+      strides=1, is_training=is_training, name='block_layer2',
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=256, block_fn=building_block, blocks=layers[2],
-      strides=2, is_training=is_training, name='block_layer3',
+      strides=1, is_training=is_training, name='block_layer3',
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=512, block_fn=building_block, blocks=layers[3],
-      strides=2, is_training=is_training, name='block_layer4',
+      strides=1, is_training=is_training, name='block_layer4',
       data_format=data_format)
 
   inputs = batch_norm_relu(inputs, is_training, data_format)
-  """
+  
   inputs = tf.layers.average_pooling2d(
       inputs=inputs, pool_size=7, strides=1, padding='VALID',
       data_format=data_format)
-  """
+  
   inputs = tf.identity(inputs, 'final_avg_pool')
   inputs = tf.reshape(inputs,
                       [-1, 512])
   inputs = tf.layers.dense(inputs=inputs, units=model_settings['label_count'])
   inputs = tf.identity(inputs, 'final_dense')
-  flattened_final_conv = tf.reshape(inputs,
-                                     [-1, final_conv_element_count])
-  label_count = model_settings['label_count']
-  
-  final_fc_weights = tf.Variable(
-      tf.truncated_normal(
-          [4, label_count], stddev=0.01))
-  final_fc_bias = tf.Variable(tf.zeros([label_count]))
-  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
-  
-  
+ 
   if is_training:
-    return final_fc, dropout_prob
+    return inputs, dropout_prob
   else:
-    return final_fc
+    return inputs
 
   
   
