@@ -1328,11 +1328,11 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   
   inputs = conv2d_fixed_padding(
     inputs=fingerprint_4d, filters=64, 
-    kernel_size=4, strides=1, data_format=data_format)
+    kernel_size=3, strides=2, data_format=data_format)
   
   inputs = tf.identity(inputs, 'initial_conv')
   inputs = tf.layers.max_pooling2d(
-      inputs=inputs, pool_size=2, strides=1, padding='SAME',
+      inputs=inputs, pool_size=2, strides=2, padding='SAME',
       data_format=data_format)
   inputs = tf.identity(inputs, 'initial_max_pool')
 
@@ -1342,15 +1342,15 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=128, block_fn=building_block, blocks=layers[1],
-      strides=1, is_training=is_training, name='block_layer2',
+      strides=2, is_training=is_training, name='block_layer2',
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=256, block_fn=building_block, blocks=layers[2],
-      strides=1, is_training=is_training, name='block_layer3',
+      strides=2, is_training=is_training, name='block_layer3',
       data_format=data_format)
   inputs = block_layer(
       inputs=inputs, filters=512, block_fn=building_block, blocks=layers[3],
-      strides=1, is_training=is_training, name='block_layer4',
+      strides=2, is_training=is_training, name='block_layer4',
       data_format=data_format)
 
   inputs = batch_norm_relu(inputs, is_training, data_format)
