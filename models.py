@@ -1360,7 +1360,7 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   """
   inputs = tf.identity(inputs, 'final_avg_pool')
   inputs = tf.reshape(inputs,
-                      [-1, 512 if block_fn is building_block else 2048])
+                      [-1, 512])
   inputs = tf.layers.dense(inputs=inputs, units=num_classes)
   inputs = tf.identity(inputs, 'final_dense')
   return inputs
