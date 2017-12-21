@@ -797,7 +797,7 @@ def _create_ds_conv(input, is_training, downsample):
   #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
   depthwise_conv = tf.layers.separable_conv2d(input, 
                                          filters=276, 
-                                         kernel_size=[3,3],
+                                         kernel_size=[10,4],
                                          strides=[_stride,_stride],
                                          padding='SAME', 
                                          activation=tf.nn.relu)
