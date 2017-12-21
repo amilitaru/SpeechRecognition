@@ -1365,9 +1365,9 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   inputs = tf.identity(inputs, 'final_dense')
   
   if is_training:
-    return final_fc, dropout_prob
+    return inputs, dropout_prob
   else:
-    return final_fc
+    return inputs
 
   
   
