@@ -115,7 +115,7 @@ def create_model(fingerprint_input, model_settings, model_architecture,
       return ds_cnn_large_dropout(fingerprint_input, model_settings,
                                          is_training)
   elif model_architecture == 'resnet':
-      return create_resnet(fingerprint_input, model_settings,
+      return create_resnet_18(fingerprint_input, model_settings,
                                          is_training)
 
   else:
@@ -797,7 +797,7 @@ def _create_ds_conv(input, is_training, downsample):
   #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
   depthwise_conv = tf.layers.separable_conv2d(input, 
                                          filters=276, 
-                                         kernel_size=[3,3],
+                                         kernel_size=[10,4],
                                          strides=[_stride,_stride],
                                          padding='SAME', 
                                          activation=tf.nn.relu)
@@ -1313,3 +1313,54 @@ def create_resnet(fingerprint_input, model_settings, is_training,scope='resnet_c
   return model_generator(fingerprint_4d, is_training)
 
 
+
+def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resnet_cnn'):
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  
+  inputs = conv2d_fixed_padding(
+    inputs=fingerprint_4d, filters=64, 
+    kernel_size=4, strides=2, data_format='channels_last')
+  
+  inputs = tf.identity(inputs, 'initial_conv')
+  inputs = tf.layers.max_pooling2d(
+      inputs=inputs, pool_size=3, strides=2, padding='SAME',
+      data_format=data_format)
+  inputs = tf.identity(inputs, 'initial_max_pool')
+
+  inputs = block_layer(
+      inputs=inputs, filters=64, block_fn=block_fn, blocks=layers[0],
+      strides=1, is_training=is_training, name='block_layer1',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=128, block_fn=block_fn, blocks=layers[1],
+      strides=2, is_training=is_training, name='block_layer2',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=256, block_fn=block_fn, blocks=layers[2],
+      strides=2, is_training=is_training, name='block_layer3',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[3],
+      strides=2, is_training=is_training, name='block_layer4',
+      data_format=data_format)
+
+  inputs = batch_norm_relu(inputs, is_training, data_format)
+  inputs = tf.layers.average_pooling2d(
+      inputs=inputs, pool_size=7, strides=1, padding='VALID',
+      data_format=data_format)
+  inputs = tf.identity(inputs, 'final_avg_pool')
+  inputs = tf.reshape(inputs,
+                      [-1, 512 if block_fn is building_block else 2048])
+  inputs = tf.layers.dense(inputs=inputs, units=num_classes)
+  inputs = tf.identity(inputs, 'final_dense')
+  return inputs
+
+
+  
+  
+  
