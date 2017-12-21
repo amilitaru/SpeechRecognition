@@ -1317,6 +1317,7 @@ def create_resnet(fingerprint_input, model_settings, is_training,scope='resnet_c
 def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resnet_cnn'):
   if is_training:
     dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  data_format = 'channels_last'
   input_frequency_size = model_settings['dct_coefficient_count']
   input_time_size = model_settings['spectrogram_length']
   fingerprint_4d = tf.reshape(fingerprint_input,
@@ -1324,7 +1325,7 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   
   inputs = conv2d_fixed_padding(
     inputs=fingerprint_4d, filters=64, 
-    kernel_size=4, strides=2, data_format='channels_last')
+    kernel_size=4, strides=2, data_format=data_format)
   
   inputs = tf.identity(inputs, 'initial_conv')
   inputs = tf.layers.max_pooling2d(
