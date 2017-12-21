@@ -1334,19 +1334,19 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   inputs = tf.identity(inputs, 'initial_max_pool')
 
   inputs = block_layer(
-      inputs=inputs, filters=64, block_fn=block_fn, blocks=layers[0],
+      inputs=inputs, filters=64, block_fn=building_block, blocks=layers[0],
       strides=1, is_training=is_training, name='block_layer1',
       data_format=data_format)
   inputs = block_layer(
-      inputs=inputs, filters=128, block_fn=block_fn, blocks=layers[1],
+      inputs=inputs, filters=128, block_fn=building_block, blocks=layers[1],
       strides=2, is_training=is_training, name='block_layer2',
       data_format=data_format)
   inputs = block_layer(
-      inputs=inputs, filters=256, block_fn=block_fn, blocks=layers[2],
+      inputs=inputs, filters=256, block_fn=building_block, blocks=layers[2],
       strides=2, is_training=is_training, name='block_layer3',
       data_format=data_format)
   inputs = block_layer(
-      inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[3],
+      inputs=inputs, filters=512, block_fn=building_block, blocks=layers[3],
       strides=2, is_training=is_training, name='block_layer4',
       data_format=data_format)
 
