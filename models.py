@@ -1361,7 +1361,7 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   inputs = tf.identity(inputs, 'final_avg_pool')
   inputs = tf.reshape(inputs,
                       [-1, 512])
-  inputs = tf.layers.dense(inputs=inputs, units=num_classes)
+  inputs = tf.layers.dense(inputs=inputs, units=model_settings['label_count'])
   inputs = tf.identity(inputs, 'final_dense')
   return inputs
 
