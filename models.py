@@ -1353,9 +1353,11 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
       data_format=data_format)
 
   inputs = batch_norm_relu(inputs, is_training, data_format)
+  """
   inputs = tf.layers.average_pooling2d(
       inputs=inputs, pool_size=7, strides=1, padding='VALID',
       data_format=data_format)
+  """
   inputs = tf.identity(inputs, 'final_avg_pool')
   inputs = tf.reshape(inputs,
                       [-1, 512 if block_fn is building_block else 2048])
