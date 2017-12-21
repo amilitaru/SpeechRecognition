@@ -1359,13 +1359,12 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
   
   final_conv_shape = inputs.get_shape()
 
-  final_filter_count = 512
-  final_conv_output_width = final_conv_shape[1]
-  final_conv_output_height = final_conv_shape[0]
+  final_filter_count=512
+  final_conv_output_width = final_conv_shape[2]
+  final_conv_output_height = final_conv_shape[1]
   
-  final_conv_element_count = int(final_conv_output_width * final_conv_output_height *
-      final_filter_count)
-  flattened_final_conv = tf.reshape(final_conv,
+  final_conv_element_count = int(final_conv_output_width * final_conv_output_height * final_filter_count)
+  flattened_final_conv = tf.reshape(inputs,
                                      [-1, final_conv_element_count])
   label_count = model_settings['label_count']
   
