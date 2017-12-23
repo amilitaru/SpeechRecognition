@@ -71,7 +71,8 @@ def label_wav(dir, labels, graph, output_file):
 
   labels_list = load_labels(labels)
 
-
+  fieldnames = labels_list.copy()
+  fieldnames.insert('filename')
   csvfile = open(output_file, 'w');
   writer = csv.DictWriter(csvfile, fieldnames=labels_list)
   writer.writeheader()
@@ -91,7 +92,9 @@ def label_wav(dir, labels, graph, output_file):
         with open(wav_path, 'rb') as wav_file:
           wav_data = wav_file.read()
           predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
-          writer.writerow( dict( zip( labels_list, predictions)))
+          dict_predctions = dict( zip( labels_list, predictions))
+          dict_predctions['filename'] = wav
+          writer.writerow(dict_predctions)
 
 
 
