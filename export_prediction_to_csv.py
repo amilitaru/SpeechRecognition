@@ -74,7 +74,7 @@ def label_wav(dir, labels, graph, output_file):
   fieldnames = labels_list.copy()
   fieldnames.insert(0,'filename')
   csvfile = open(output_file, 'w');
-  writer = csv.DictWriter(csvfile, fieldnames=labels_list)
+  writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
   writer.writeheader()
   
   # load graph, which is stored in the default session
