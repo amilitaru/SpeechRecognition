@@ -72,7 +72,7 @@ def label_wav(dir, labels, graph, output_file):
   labels_list = load_labels(labels)
 
   fieldnames = labels_list.copy()
-  fieldnames.insert('filename')
+  fieldnames.insert(0,'filename')
   csvfile = open(output_file, 'w');
   writer = csv.DictWriter(csvfile, fieldnames=labels_list)
   writer.writeheader()
