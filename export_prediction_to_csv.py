@@ -80,7 +80,7 @@ def label_wav(dir, labels, graph, output_file):
   load_graph(graph)
   with tf.Session() as sess:
       softmax_tensor = sess.graph.get_tensor_by_name('labels_softmax:0')
-      for wav in os.listdir(dir).sort():
+      for wav in os.listdir(dir):
         if not wav.endswith(".wav"):
           continue  
         wav_path= dir +'/'+ wav
@@ -91,7 +91,7 @@ def label_wav(dir, labels, graph, output_file):
         with open(wav_path, 'rb') as wav_file:
           wav_data = wav_file.read()
           predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
-          writer.writerow( dict( zip( labels, predictions)))
+          writer.writerow( dict( zip( labels_list, predictions)))
 
 
 
