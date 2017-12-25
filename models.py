@@ -111,8 +111,8 @@ def create_model(fingerprint_input, model_settings, model_architecture,
   elif model_architecture == 'ds_cnn_large':
       return ds_cnn_large(fingerprint_input, model_settings,
                                          is_training)
-  elif model_architecture == 'ds_cnn_large_dropout':
-      return ds_cnn_large_dropout(fingerprint_input, model_settings,
+  elif model_architecture == 'ds_cnn_large_test':
+      return ds_cnn_large_test(fingerprint_input, model_settings,
                                          is_training)
   elif model_architecture == 'resnet':
       return create_resnet_18(fingerprint_input, model_settings,
@@ -797,18 +797,16 @@ def _create_ds_conv(input, is_training, downsample):
   #he_init = tf.layers.variance_scaling_initializer() #maybe add this in a future version 
   depthwise_conv = tf.layers.separable_conv2d(input, 
                                          filters=276, 
-                                         kernel_size=[10,4],
+                                         kernel_size=[3,3],
                                          strides=[_stride,_stride],
-                                         padding='SAME', 
-                                         activation=tf.nn.relu)
+                                         padding='SAME')
   bn = tf.layers.batch_normalization(depthwise_conv)
   first_relu = tf.nn.relu(bn)
 
   point_conv =  tf.layers.conv2d(first_relu, 
                              filters=276,
-                             kernel_size=[1,1],
-                             padding='SAME',
-                             activation=tf.nn.relu)
+                             kernel_size=[3,3],
+                             padding='SAME')
   
   bn = tf.layers.batch_normalization(point_conv)
   
@@ -873,7 +871,7 @@ def ds_cnn_large(fingerprint_input, model_settings, is_training,scope='ds_test_c
 
 
   
-def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
+def ds_cnn_large_test(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
   
   
   if is_training:
@@ -890,52 +888,16 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
           [first_filter_height, first_filter_width, 1, first_filter_count],
           stddev=0.01))
   first_bias = tf.Variable(tf.zeros([first_filter_count]))
-  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
+  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 1, 1, 1],
                             'SAME') + first_bias
   
   
-  first_relu = tf.nn.relu(first_conv)
-  if is_training:
-    first_dropout = tf.nn.dropout(first_relu, dropout_prob)
-  else:
-    first_dropout = first_relu
-
-    
-    
-  second_conv = _create_ds_conv(first_dropout, is_training, downsample=True)
-    
-  if is_training:
-    second_dropout = tf.nn.dropout(second_conv, dropout_prob)
-  else:
-    second_dropout = second_conv
-    
-  
-  third_conv = _create_ds_conv(second_dropout, is_training, downsample=False)
-  
-  if is_training:
-    third_dropout = tf.nn.dropout(third_conv, dropout_prob)
-  else:
-    third_dropout = third_conv
-
- 
-  
-  fourth_conv = _create_ds_conv(third_dropout, is_training, downsample=False)
-  
-  if is_training:
-    fourth_dropout = tf.nn.dropout(fourth_conv , dropout_prob)
-  else:
-    fourth_dropout = fourth_conv
- 
-  
-  fifth_conv = _create_ds_conv(fourth_dropout, is_training, downsample=False)
-  
-  if is_training:
-    fifth_dropout = tf.nn.dropout(fifth_conv, dropout_prob)
-  else:
-    fifth_dropout = fifth_conv
-
-
-  sixth_conv = _create_ds_conv(fifth_dropout, is_training, downsample=False)
+  first_relu  = tf.nn.relu(first_conv)  
+  second_conv = _create_ds_conv(first_relu, is_training, downsample=True)
+  third_conv  = _create_ds_conv(second_conv, is_training, downsample=False) 
+  fourth_conv = _create_ds_conv(third_conv, is_training, downsample=False)  
+  fifth_conv  = _create_ds_conv(fourth_conv, is_training, downsample=False)
+  sixth_conv  = _create_ds_conv(fifth_conv, is_training, downsample=False)
 
   
   final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
@@ -961,7 +923,6 @@ def ds_cnn_large_dropout(fingerprint_input, model_settings, is_training,scope='d
     return final_fc, dropout_prob
   else:
     return final_fc
-
 
 
 
