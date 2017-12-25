@@ -799,14 +799,16 @@ def _create_ds_conv(input, is_training, downsample):
                                          filters=276, 
                                          kernel_size=[3,3],
                                          strides=[_stride,_stride],
-                                         padding='SAME')
+                                         padding='SAME',
+                                         activation=tf.nn.relu)
   bn = tf.layers.batch_normalization(depthwise_conv)
   first_relu = tf.nn.relu(bn)
 
   point_conv =  tf.layers.conv2d(first_relu, 
                              filters=276,
                              kernel_size=[3,3],
-                             padding='SAME')
+                             padding='SAME',
+                             activation=tf.nn.relu)
   
   bn = tf.layers.batch_normalization(point_conv)
   
