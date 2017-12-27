@@ -896,9 +896,9 @@ def ds_cnn_large_test(fingerprint_input, model_settings, is_training,scope='ds_t
   
   first_relu  = tf.nn.relu(first_conv)  
   second_conv = _create_ds_conv(first_relu, is_training, downsample=True)
-  third_conv  = _create_ds_conv(second_conv, is_training, downsample=False) 
+  third_conv  = _create_ds_conv(second_conv, is_training, downsample=True) 
   fourth_conv = _create_ds_conv(third_conv, is_training, downsample=True)  
-  fifth_conv  = _create_ds_conv(fourth_conv, is_training, downsample=False)
+  fifth_conv  = _create_ds_conv(fourth_conv, is_training, downsample=True)
   sixth_conv  = _create_ds_conv(fifth_conv, is_training, downsample=True)
 
   
