@@ -810,7 +810,6 @@ def _create_ds_conv(input, is_training, downsample):
                              filters=276,
                              kernel_size=[3,3],
                              padding='SAME',
-                             kernel_initializer=tf.variance_scaling_initializer(),
                              activation=tf.nn.relu)
   
   bn = tf.layers.batch_normalization(point_conv)
