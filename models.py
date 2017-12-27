@@ -800,6 +800,8 @@ def _create_ds_conv(input, is_training, downsample):
                                          kernel_size=[3,3],
                                          strides=[_stride,_stride],
                                          padding='SAME',
+                                         depthwise_initializer=tf.variance_scaling_initializer(),
+                                         pointwise_initializer=tf.variance_scaling_initializer(),
                                          activation=tf.nn.relu)
   bn = tf.layers.batch_normalization(depthwise_conv)
   first_relu = tf.nn.relu(bn)
@@ -808,6 +810,7 @@ def _create_ds_conv(input, is_training, downsample):
                              filters=276,
                              kernel_size=[3,3],
                              padding='SAME',
+                             kernel_initializer=tf.variance_scaling_initializer(),
                              activation=tf.nn.relu)
   
   bn = tf.layers.batch_normalization(point_conv)
@@ -925,6 +928,62 @@ def ds_cnn_large_test(fingerprint_input, model_settings, is_training,scope='ds_t
     return final_fc, dropout_prob
   else:
     return final_fc
+
+
+
+def ds_cnn_large_inception_test(fingerprint_input, model_settings, is_training,scope='ds_test_cnn'):
+  
+  
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  first_filter_width = 4
+  first_filter_height = 10
+  first_filter_count = 276
+  first_weights = tf.Variable(
+      tf.truncated_normal(
+          [first_filter_height, first_filter_width, 1, first_filter_count],
+          stddev=0.01))
+  first_bias = tf.Variable(tf.zeros([first_filter_count]))
+  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 1, 1, 1],
+                            'SAME') + first_bias
+  
+  
+  first_relu  = tf.nn.relu(first_conv)  
+  second_conv = _create_ds_conv(first_relu, is_training, downsample=True)
+  third_conv  = _create_ds_conv(second_conv, is_training, downsample=True) 
+  fourth_conv = _create_ds_conv(third_conv, is_training, downsample=True)  
+  fifth_conv  = _create_ds_conv(fourth_conv, is_training, downsample=True)
+  sixth_conv  = _create_ds_conv(fifth_conv, is_training, downsample=True)
+
+  
+  final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
+  
+  final_conv_shape = final_conv.get_shape()
+  final_conv_output_width = final_conv_shape[2]
+  final_conv_output_height = final_conv_shape[1]
+  final_filter_count = 276
+  final_conv_element_count = int(
+      final_conv_output_width * final_conv_output_height *
+      final_filter_count)
+  flattened_final_conv = tf.reshape(final_conv,
+                                     [-1, final_conv_element_count])
+  label_count = model_settings['label_count']
+  
+  final_fc_weights = tf.Variable(
+      tf.truncated_normal(
+          [final_conv_element_count, label_count], stddev=0.01))
+  final_fc_bias = tf.Variable(tf.zeros([label_count]))
+  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+  if is_training:
+    return final_fc, dropout_prob
+  else:
+    return final_fc
+
 
 
 
