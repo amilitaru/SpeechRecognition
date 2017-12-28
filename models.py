@@ -117,6 +117,9 @@ def create_model(fingerprint_input, model_settings, model_architecture,
   elif model_architecture == 'resnet':
       return create_resnet_18(fingerprint_input, model_settings,
                                          is_training)
+  elif model_architecture == 'resnet_34':
+      return create_resnet_34(fingerprint_input, model_settings,
+                                         is_training)
 
   else:
     raise Exception('model_architecture argument "' + model_architecture +
@@ -1405,4 +1408,71 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
 
   
   
+def create_resnet_34(fingerprint_input, model_settings, is_training,scope='resnet_cnn'):
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+    
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+
+  data_format = 'channels_last'
+  layers = [3, 4, 6, 3]
+  
+  inputs = conv2d_fixed_padding(
+    inputs=fingerprint_4d, filters=64, 
+    kernel_size=3, strides=2, data_format=data_format)
+  
+  inputs = tf.identity(inputs, 'initial_conv')
+  inputs = tf.layers.max_pooling2d(
+      inputs=inputs, pool_size=2, strides=2, padding='SAME',
+      data_format=data_format)
+  inputs = tf.identity(inputs, 'initial_max_pool')
+
+  inputs = block_layer(
+      inputs=inputs, filters=64, block_fn=building_block, blocks=layers[0],
+      strides=1, is_training=is_training, name='block_layer1',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=128, block_fn=building_block, blocks=layers[1],
+      strides=2, is_training=is_training, name='block_layer2',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=256, block_fn=building_block, blocks=layers[2],
+      strides=2, is_training=is_training, name='block_layer3',
+      data_format=data_format)
+  inputs = block_layer(
+      inputs=inputs, filters=512, block_fn=building_block, blocks=layers[3],
+      strides=2, is_training=is_training, name='block_layer4',
+      data_format=data_format)
+
+  inputs = batch_norm_relu(inputs, is_training, data_format)
+  
+  
+  
+  final_conv_shape = inputs.get_shape()
+
+  final_filter_count=512
+  final_conv_output_width = final_conv_shape[2]
+  final_conv_output_height = final_conv_shape[1]
+  
+  final_conv_element_count = int(final_conv_output_width * final_conv_output_height * final_filter_count)
+  flattened_final_conv = tf.reshape(inputs,
+                                     [-1, final_conv_element_count])
+  label_count = model_settings['label_count']
+  
+  final_fc_weights = tf.Variable(
+      tf.truncated_normal(
+          [final_conv_element_count, label_count], stddev=0.01))
+  final_fc_bias = tf.Variable(tf.zeros([label_count]))
+  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+ 
+ 
+ 
+  if is_training:
+    return final_fc, dropout_prob
+  else:
+    return final_fc
   
