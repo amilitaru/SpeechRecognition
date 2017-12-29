@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-r"""Runs a trained audio graph against a WAVE file and reports the results.
+"""Runs a trained audio graph against a WAVE file and reports the results.
 
 The model, labels and .wav file specified in the arguments will be loaded, and
 then the predictions from running the model against the audio data will be
@@ -35,7 +35,7 @@ import argparse
 import sys
 import os
 import csv
-
+import wave
 import tensorflow as tf
 # pylint: disable=unused-import
 from tensorflow.contrib.framework.python.ops import audio_ops as contrib_audio
@@ -59,10 +59,14 @@ def load_labels(filename):
 
 
 
-def label_wav(dir, labels, graph, output_file):
+def label_wav(test_dir, trainig_dir, labels, graph, output_file):
   """Check input directory"""
-  if not dir or not tf.gfile.IsDirectory(dir):
-    tf.logging.fatal('Diretory does not exist %s', dir)
+  if not test_dir or not tf.gfile.IsDirectory(test_dir):
+    tf.logging.fatal('Diretory does not exist %s', test_dir)
+
+  if not trainig_dir or not tf.gfile.IsDirectory(trainig_dir):
+    tf.logging.fatal('Diretory does not exist %s', trainig_dir)
+
   if not labels or not tf.gfile.Exists(labels):
     tf.logging.fatal('Labels file does not exist %s', labels)
 
@@ -73,27 +77,45 @@ def label_wav(dir, labels, graph, output_file):
 
   fieldnames = labels_list.copy()
   fieldnames.insert(0,'filename')
+  fieldnames.append('label')
   csvfile = open(output_file, 'w');
   writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
   writer.writeheader()
   
+  files=dict()
+  for wav in os.listdir(test_dir):
+    if not wav.endswith(".wav"):
+      continue  
+    full_path = test_dir + '/' + wav
+    if not full_path or not tf.gfile.Exists(full_path):
+      continue
+    files[wav] = {'label':'N/A','path':full_path}
+    
+  for lbl in labels_list:
+    if lbl == '_silence_' or lbl == '_unknown_':
+      continue
+    dir_path = trainig_dir + '/' +lbl
+    for wav in os.listdir(dir_path):
+      if not wav.endswith(".wav"):
+        continue  
+
+      full_path = dir_path + '/' + wav
+      if not full_path or not tf.gfile.Exists(full_path):
+        continue    
+      files[wav] = {'label':lbl,'path':full_path}
+      
   # load graph, which is stored in the default session
   load_graph(graph)
+  
   with tf.Session() as sess:
       softmax_tensor = sess.graph.get_tensor_by_name('labels_softmax:0')
-      for wav in os.listdir(dir):
-        if not wav.endswith(".wav"):
-          continue  
-        wav_path= dir +'/'+ wav
-        """Loads the model and labels, and runs the inference to print predictions."""
-        if not wav_path or not tf.gfile.Exists(wav_path):
-          tf.logging.fatal('Audio file does not exist %s', wav_path)
-      
-        with open(wav_path, 'rb') as wav_file:
+      for filename in files.keys():        
+        with open(files[filename]['path'], 'rb') as wav_file:
           wav_data = wav_file.read()
           predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
           dict_predctions = dict( zip( labels_list, predictions))
-          dict_predctions['filename'] = wav
+          dict_predctions['filename'] = filename
+          dict_predctions['label'] = files[filename]['label']
           writer.writerow(dict_predctions)
 
 
@@ -102,13 +124,15 @@ def label_wav(dir, labels, graph, output_file):
 
 def main(_):
   """Entry point for script, converts flags to arguments."""
-  label_wav(FLAGS.dir, FLAGS.labels, FLAGS.graph, FLAGS.output_file)
+  label_wav(FLAGS.test_dir,FLAGS.trainig_dir, FLAGS.labels, FLAGS.graph, FLAGS.output_file)
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--dir', type=str, default='', help='Input directory.')
+      '--test_dir', type=str, default='', help='Testing data input directory.')
+  parser.add_argument(
+      '--trainig_dir', type=str, default='', help='Train data input directory.')
   parser.add_argument(
       '--graph', type=str, default='', help='Model to use for identification.')
   parser.add_argument(
