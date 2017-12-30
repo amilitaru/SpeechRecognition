@@ -114,10 +114,14 @@ def create_model(fingerprint_input, model_settings, model_architecture,
   elif model_architecture == 'ds_cnn_large_dropout':
       return ds_cnn_large_dropout(fingerprint_input, model_settings,
                                          is_training)
+  
   elif model_architecture == 'resnet':
       return create_resnet_18(fingerprint_input, model_settings,
                                          is_training)
-
+  elif model_architecture == 'cnn_large':
+      return cnn_large(fingerprint_input, model_settings,
+                                         is_training)
+  
   else:
     raise Exception('model_architecture argument "' + model_architecture +
                     '" not recognized, should be one of "single_fc", "conv",' +
@@ -1384,4 +1388,95 @@ def create_resnet_18(fingerprint_input, model_settings, is_training,scope='resne
 
   
   
+def cnn_large(fingerprint_input, model_settings, is_training,scope='cnn_large'):
   
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  first_filter_width = 4
+  first_filter_height = 10
+  first_filter_count = 276
+  first_weights = tf.Variable(
+      tf.truncated_normal(
+          [first_filter_height, first_filter_width, 1, first_filter_count],
+          stddev=0.01))
+  first_bias = tf.Variable(tf.zeros([first_filter_count]))
+  first_conv = tf.nn.conv2d(fingerprint_4d, first_weights, [1, 2, 2, 1],
+                            'SAME') + first_bias
+  
+  
+  first_relu = tf.nn.relu(first_conv)
+
+  second_conv = tf.layers.separable_conv2d(first_relu, 
+                                         filters=276, 
+                                         kernel_size=3,
+                                         strides=2,
+                                         padding='SAME', 
+                                         activation=tf.nn.relu)
+
+  bn = tf.layers.batch_normalization(second_conv)
+  relu = tf.nn.relu(bn)
+  
+  third_conv = tf.layers.separable_conv2d(relu, 
+                                           filters=276, 
+                                           kernel_size=3,
+                                           strides=1,
+                                           padding='SAME', 
+                                           activation=tf.nn.relu)
+  bn = tf.layers.batch_normalization(third_conv)
+  relu = tf.nn.relu(bn)
+  
+  fourth_conv = tf.layers.separable_conv2d(relu, 
+                                           filters=276, 
+                                           kernel_size=3,
+                                           strides=1,
+                                           padding='SAME', 
+                                           activation=tf.nn.relu)
+    
+  bn = tf.layers.batch_normalization(fourth_conv)
+  relu = tf.nn.relu(bn)
+  
+  fifth_conv = tf.layers.separable_conv2d(relu, 
+                                           filters=276, 
+                                           kernel_size=3,
+                                           strides=1,
+                                           padding='SAME', 
+                                           activation=tf.nn.relu)
+  
+  bn = tf.layers.batch_normalization(fifth_conv)
+  relu = tf.nn.relu(bn)
+  
+  sixth_conv = tf.layers.separable_conv2d(relu, 
+                                           filters=276, 
+                                           kernel_size=3,
+                                           strides=1,
+                                           padding='SAME', 
+                                           activation=tf.nn.relu)
+  
+  final_conv = tf.layers.average_pooling2d(sixth_conv, [2, 2], [2, 2], 'SAME')
+  
+  final_conv_shape = final_conv.get_shape()
+  final_conv_output_width = final_conv_shape[2]
+  final_conv_output_height = final_conv_shape[1]
+  final_filter_count = 276
+  final_conv_element_count = int(
+      final_conv_output_width * final_conv_output_height *
+      final_filter_count)
+  flattened_final_conv = tf.reshape(final_conv,
+                                     [-1, final_conv_element_count])
+  label_count = model_settings['label_count']
+  
+  final_fc_weights = tf.Variable(
+      tf.truncated_normal(
+          [final_conv_element_count, label_count], stddev=0.01))
+  final_fc_bias = tf.Variable(tf.zeros([label_count]))
+  final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+  if is_training:
+    return final_fc, dropout_prob
+  else:
+    return final_fc
+
