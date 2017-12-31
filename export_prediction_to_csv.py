@@ -101,22 +101,22 @@ def label_wav(test_dir, trainig_dir, labels, graph, output_file):
 
       full_path = dir_path + '/' + wav
       if not full_path or not tf.gfile.Exists(full_path):
-        continue    
-      files[wav] = {'label':lbl,'path':full_path}
+        continue
+      with open(full_path,'rb') as wav_file:    
+        files[wav] = {'label':lbl,'file':wav_file.read()}
       
   # load graph, which is stored in the default session
   load_graph(graph)
-  
+  prediction_list = []
   with tf.Session() as sess:
       softmax_tensor = sess.graph.get_tensor_by_name('labels_softmax:0')
       for filename in files.keys():        
-        with open(files[filename]['path'], 'rb') as wav_file:
-          wav_data = wav_file.read()
-          predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
-          dict_predctions = dict( zip( labels_list, predictions))
-          dict_predctions['filename'] = filename
-          dict_predctions['label'] = files[filename]['label']
-          writer.writerow(dict_predctions)
+        predictions, = sess.run(softmax_tensor, {'wav_data:0': files[filename]['file']})
+        dict_predctions = dict( zip( labels_list, predictions))
+        dict_predctions['filename'] = filename
+        dict_predctions['label'] = files[filename]['label']
+        prediction_list.append(dict_predctions)
+  writer.writerows(prediction_list)
 
 
 
