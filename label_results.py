@@ -103,22 +103,20 @@ def label_wav(dir, labels, graph, output_file):
     """Loads the model and labels, and runs the inference to print predictions."""
     if not wav_path or not tf.gfile.Exists(wav_path):
       tf.logging.fatal('Audio file does not exist %s', wav_path)
-    files[wav]=wav_path
+    with open(wav_path,'rb') as wav_file:
+      files[wav] = wav_file.read()
   
+  model_output_list = []  
   with tf.Session() as sess:
     softmax_tensor = sess.graph.get_tensor_by_name('labels_softmax:0')
     for wav_file in files.keys():
-      with open(files[wav_file], 'rb') as wav_file:
-        wav_data = wav_file.read()
-        predictions, = sess.run(softmax_tensor, {'wav_data:0': wav_data})
-        label = labels_list [ predictions.argsort()[-1:][::-1][0] ]
-        label = 'unknown' if label not in label_list else label
-        label = 'silence' if label == '_silence_' else label
-        writer.writerow(
-          {
-            'fname': wav,
-            'label': label
-          })
+      predictions, = sess.run(softmax_tensor, {'wav_data:0': files[wav_file]})
+      label = labels_list [ predictions.argsort()[-1:][::-1][0] ]
+      label = 'unknown' if label not in label_list else label
+      label = 'silence' if label == '_silence_' else label
+      model_output_list.append({ 'fname': wav_file, 'label': label})
+  
+  writer.writerows(model_output_list)
 
 
 def main(_):
