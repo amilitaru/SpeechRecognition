@@ -89,7 +89,8 @@ def label_wav(test_dir, trainig_dir, labels, graph, output_file):
     full_path = test_dir + '/' + wav
     if not full_path or not tf.gfile.Exists(full_path):
       continue
-    files[wav] = {'label':'N/A','path':full_path}
+    with open(full_path,'rb') as wav_file:    
+        files[wav] = {'label':lbl,'file':wav_file.read()}
     
   for lbl in labels_list:
     if lbl == '_silence_' or lbl == '_unknown_':
