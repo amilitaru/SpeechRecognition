@@ -121,7 +121,9 @@ def create_model(fingerprint_input, model_settings, model_architecture,
   elif model_architecture == 'cnn_large':
       return cnn_large(fingerprint_input, model_settings,
                                          is_training)
-  
+  elif model_architecture == 'resnet_paper':
+      return resnet_paper(fingerprint_input, model_settings,
+                                         is_training)  
   else:
     raise Exception('model_architecture argument "' + model_architecture +
                     '" not recognized, should be one of "single_fc", "conv",' +
@@ -1495,6 +1497,149 @@ def cnn_large(fingerprint_input, model_settings, is_training,scope='cnn_large'):
           [final_conv_element_count, label_count], stddev=0.01))
   final_fc_bias = tf.Variable(tf.zeros([label_count]))
   final_fc = tf.matmul(flattened_final_conv, final_fc_weights) + final_fc_bias
+  
+  if is_training:
+    return final_fc, dropout_prob
+  else:
+    return final_fc
+
+
+def _create_stem(input):
+  
+  input = tf.layers.conv2d(
+    inputs=input,
+    filters=32,
+    kernel_size=[3,3],
+    strides=[2,2],
+    padding='valid',
+    activation=tf.nn.relu
+    )
+  
+  input = tf.layers.conv2d(
+    inputs=input,
+    filters=32,
+    kernel_size=[3,3],
+    strides=[1,1],
+    padding='valid',
+    activation=tf.nn.relu
+    )
+  input = tf.layers.conv2d(
+    inputs=input,
+    filters=64,
+    kernel_size=[3,3],
+    strides=[1,1],
+    padding='same',
+    activation=tf.nn.relu
+    )
+  #Creating two branches:
+  branch1 = tf.layers.max_pooling2d(
+    inputs=input,
+    pool_size=[3,3],
+    strides=2,
+    padding='valid'
+    )
+  branch2 = tf.layers.conv2d(
+    inputs=input,
+    filters=96,
+    kernel_size=[3,3],
+    strides=2,
+    padding='valid',
+    activation=tf.nn.relu
+    )
+  
+  input = branch1 + branch2
+  
+  branch1 = tf.layers.conv2d(
+    inputs=input,
+    filters=64,
+    kernel_size=[1,1],
+    strides=1,
+    padding='same',
+    activation=tf.nn.relu
+    )
+  
+  branch1 = tf.layers.conv2d(
+    inputs=branch1,
+    filters=96,
+    kernel_size=[3,3],
+    strides=1,
+    padding='valid',
+    activation=tf.nn.relu
+    )
+
+  branch2 = tf.layers.conv2d(
+    inputs=input,
+    filters=64,
+    kernel_size=[1,1],
+    strides=1,
+    padding='same',
+    activation=tf.nn.relu
+    )
+  
+  branch2 = tf.layers.conv2d(
+    inputs=branch2,
+    filters=64,
+    kernel_size=[7,1],
+    strides=1,
+    padding='same',
+    activation=tf.nn.relu
+    )
+
+  branch2 = tf.layers.conv2d(
+    inputs=branch2,
+    filters=64,
+    kernel_size=[1,7],
+    strides=1,
+    padding='same',
+    activation=tf.nn.relu
+    )
+
+  branch2 = tf.layers.conv2d(
+    inputs=branch2,
+    filters=96,
+    kernel_size=[3,3],
+    strides=1,
+    padding='valid',
+    activation=tf.nn.relu
+    )
+  
+  input = branch1 + branch2
+  
+  branch1 = tf.layers.conv2d(
+    inputs=input,
+    filters=192,
+    kernel_size=[3,3],
+    strides=1,
+    padding='valid',
+    activation=tf.nn.relu
+    )
+
+ 
+  branch2 = tf.layers.max_pooling2d(
+    inputs=input,
+    pool_size=[1,1],
+    strides=2,
+    padding='valid'
+    )
+  
+  return branch1 + branch2
+
+  
+def resnet_paper(fingerprint_input, model_settings, is_training,scope='resnet_paper'):
+  if is_training:
+    dropout_prob = tf.placeholder(tf.float32, name='dropout_prob')
+  input_frequency_size = model_settings['dct_coefficient_count']
+  input_time_size = model_settings['spectrogram_length']
+  fingerprint_4d = tf.reshape(fingerprint_input,
+                              [-1, input_time_size, input_frequency_size, 1])
+  
+  
+  
+
+  
+
+
+  final_fc = _create_stem(fingerprint_4d)
   
   if is_training:
     return final_fc, dropout_prob
